@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Microscope Specimen Size Calculator</title>
+
+  <!-- Google Fonts: Syne (headings) + DM Mono (results) -->
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    /* =============================================
+       CSS VARIABLES — central theme control
+    ============================================= */
+    :root {
+      --deep-navy:       #0d1b2a;
+      --mid-navy:        #1b2d42;
+      --accent-cyan:     #00d4ff;
+      --accent-green:    #00e676;
+      --accent-amber:    #ffc107;
+      --accent-red:      #ff5252;
+      --surface-card:    #162032;
+      --surface-input:   #0f1c2d;
+      --text-primary:    #e8f4fd;
+      --text-muted:      #7a9ab0;
+      --border-subtle:   #1e3a52;
+      --font-display:    'Syne', sans-serif;
+      --font-body:       'Inter', sans-serif;
+      --font-mono:       'DM Mono', monospace;
+      --radius-md:       10px;
+      --radius-lg:       16px;
+      --transition:      0.25s ease;
+    }
+
+    /* =============================================
+       RESET & BASE
+    ============================================= */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--deep-navy);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* =============================================
+       HEADER
+    ============================================= */
+    .page-header {
+      background: linear-gradient(135deg, #0d1b2a 0%, #1b3a5c 100%);
+      border-bottom: 2px solid var(--accent-cyan);
+      padding: 28px 40px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+    .header-icon { font-size: 2.4rem; }
+    .header-text h1 {
+      font-family: var(--font-display);
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: var(--accent-cyan);
+      letter-spacing: -0.5px;
+    }
+    .header-text p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* =============================================
+       MAIN LAYOUT
+    ============================================= */
+    .page-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      max-width: 1200px;
+      margin: 32px auto;
+      padding: 0 28px 60px;
+    }
+
+    @media (max-width: 860px) {
+      .page-body { grid-template-columns: 1fr; }
+    }
+
+    /* =============================================
+       CARDS
+    ============================================= */
+    .panel-card {
+      background: var(--surface-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 26px 28px;
+    }
+    .panel-card h2 {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 12px;
+    }
+
+    /* =============================================
+       FORM ELEMENTS
+    ============================================= */
+    .form-group { margin-bottom: 18px; }
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 7px;
+    }
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      background: var(--surface-input);
+      border: 1.5px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color var(--transition);
+    }
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: var(--accent-cyan);
+    }
+    .form-group select option { background: var(--mid-navy); }
+
+    /* =============================================
+       IMAGE UPLOAD ZONE
+    ============================================= */
+    .upload-zone {
+      border: 2px dashed var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 22px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color var(--transition), background var(--transition);
+      position: relative;
+    }
+    .upload-zone:hover { border-color: var(--accent-cyan); background: rgba(0,212,255,0.03); }
+    .upload-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .upload-icon { font-size: 2rem; margin-bottom: 6px; }
+    .upload-label { font-size: 0.85rem; color: var(--text-muted); }
+    .upload-label span { color: var(--accent-cyan); font-weight: 600; }
+
+    /* Image preview */
+    #image-preview-container { margin-top: 14px; display: none; text-align: center; }
+    #image-preview-container img {
+      max-height: 160px; max-width: 100%;
+      border-radius: var(--radius-md);
+      border: 1.5px solid var(--accent-cyan);
+      object-fit: contain;
+    }
+    #image-name-label { font-size: 0.78rem; color: var(--accent-green); margin-top: 6px; }
+
+    /* =============================================
+       BUTTONS
+    ============================================= */
+    .btn-primary {
+      width: 100%;
+      background: linear-gradient(135deg, #0097c4, #00d4ff);
+      color: #0d1b2a;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1rem;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 13px 20px;
+      cursor: pointer;
+      transition: opacity var(--transition), transform var(--transition);
+      margin-top: 6px;
+      letter-spacing: 0.02em;
+    }
+    .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-danger {
+      background: transparent;
+      border: 1.5px solid var(--accent-red);
+      color: var(--accent-red);
+      border-radius: var(--radius-md);
+      padding: 5px 12px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: background var(--transition);
+    }
+    .btn-danger:hover { background: rgba(255,82,82,0.12); }
+
+    /* =============================================
+       RESULT PANEL
+    ============================================= */
+    #result-panel { display: none; margin-top: 20px; }
+
+    .result-card {
+      background: rgba(0,212,255,0.05);
+      border: 1.5px solid var(--accent-cyan);
+      border-radius: var(--radius-md);
+      padding: 20px 22px;
+    }
+
+    .result-headline {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--accent-green);
+      margin-bottom: 4px;
+    }
+    .result-unit-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .breakdown-table { width: 100%; font-size: 0.84rem; border-collapse: collapse; }
+    .breakdown-table tr td:first-child {
+      color: var(--text-muted);
+      padding: 4px 0;
+      width: 55%;
+      font-family: var(--font-mono);
+    }
+    .breakdown-table tr td:last-child {
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-weight: 500;
+    }
+
+    .formula-box {
+      background: var(--surface-input);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--accent-amber);
+      margin-top: 14px;
+      word-break: break-all;
+    }
+
+    /* =============================================
+       HISTORY TABLE
+    ============================================= */
+    .history-panel {
+      grid-column: 1 / -1;  /* span full width */
+    }
+    .table-scroll { overflow-x: auto; }
+    table.records-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      font-family: var(--font-mono);
+    }
+    .records-table thead tr {
+      background: var(--surface-input);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+    }
+    .records-table th, .records-table td {
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .records-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+    /* =============================================
+       STATUS / TOAST
+    ============================================= */
+    .status-toast {
+      display: none;
+      padding: 10px 16px;
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+      margin-top: 14px;
+      font-weight: 500;
+    }
+    .status-toast.error { background: rgba(255,82,82,0.15); border: 1px solid var(--accent-red); color: var(--accent-red); }
+    .status-toast.success { background: rgba(0,230,118,0.1); border: 1px solid var(--accent-green); color: var(--accent-green); }
+
+    /* Loading spinner */
+    .spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .empty-history-note { color: var(--text-muted); font-size: 0.85rem; padding: 16px 0; text-align: center; }
+  </style>
+</head>
+
+<body>
+
+  <!-- ===== PAGE HEADER ===== -->
+  <header class="page-header">
+    <div class="header-icon">🔬</div>
+    <div class="header-text">
+      <h1>Microscope Specimen Size Calculator</h1>
+      <p>CSC 442 — Computational Biology &amp; Interdisciplinary Studies &nbsp;|&nbsp; Phase D/E: Web Application</p>
+    </div>
+  </header>
+
+  <!-- ===== MAIN CONTENT GRID ===== -->
+  <main class="page-body">
+
+    <!-- ===========================
+         LEFT PANEL: Input Form
+    ============================ -->
+    <section class="panel-card">
+      <h2>⚗️ Perform a Calculation</h2>
+
+      <!-- Username -->
+      <div class="form-group">
+        <label for="input-username">Your Username</label>
+        <input type="text" id="input-username" placeholder="e.g. adaeze_okafor" autocomplete="off" />
+      </div>
+
+      <!-- Specimen Image Upload -->
+      <div class="form-group">
+        <label>Specimen Image</label>
+        <div class="upload-zone" id="upload-zone">
+          <!-- Hidden actual file input -->
+          <input type="file" id="input-image-file" accept=".png,.jpg,.jpeg,.bmp,.tif,.tiff,.gif" />
+          <div class="upload-icon">📷</div>
+          <div class="upload-label">
+            Drop image here or <span>browse files</span>
+          </div>
+        </div>
+        <!-- Image preview area (hidden until file chosen) -->
+        <div id="image-preview-container">
+          <img id="image-preview-tag" src="" alt="Specimen preview" />
+          <div id="image-name-label"></div>
+        </div>
+      </div>
+
+      <!-- Measured Image Size -->
+      <div class="form-group">
+        <label for="input-measured-size">Measured Image Size (mm)</label>
+        <input type="number" id="input-measured-size" step="any" min="0.000001" placeholder="e.g. 0.5" />
+      </div>
+
+      <!-- Microscope Type Dropdown -->
+      <div class="form-group">
+        <label for="select-microscope-type">Microscope Type</label>
+        <select id="select-microscope-type">
+          <!-- Options are injected by Jinja2 from Flask -->
+          {% for microscope_type_name in microscope_types %}
+            <option value="{{ microscope_type_name }}">{{ microscope_type_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Output Unit Dropdown -->
+      <div class="form-group">
+        <label for="select-output-unit">Output Unit</label>
+        <select id="select-output-unit">
+          {% for unit_name in output_units %}
+            <option value="{{ unit_name }}" {% if unit_name == 'µm' %}selected{% endif %}>
+              {{ unit_name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Submit Button -->
+      <button class="btn-primary" id="calculate-btn" onclick="submitCalculationForm()">
+        🔬 &nbsp; Calculate Real Size
+      </button>
+
+      <!-- Status Toast Messages -->
+      <div class="status-toast" id="form-status-toast"></div>
+
+      <!-- Result Display Area -->
+      <div id="result-panel">
+        <div class="result-card">
+          <div class="result-headline" id="result-main-value"></div>
+          <div class="result-unit-label" id="result-unit-label"></div>
+          <table class="breakdown-table" id="breakdown-table-body"></table>
+          <div class="formula-box" id="result-formula-text"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===========================
+         RIGHT PANEL: Image Preview
+         (shows uploaded image + context after calculation)
+    ============================ -->
+    <section class="panel-card" id="right-context-panel">
+      <h2>📊 Last Calculation Summary</h2>
+      <div id="summary-placeholder" style="color:var(--text-muted);font-size:0.88rem;margin-top:12px;">
+        Submit a calculation to see the summary here.
+      </div>
+      <div id="summary-content" style="display:none;">
+        <img id="summary-image" src="" alt="Specimen"
+          style="max-width:100%;max-height:220px;border-radius:10px;border:1.5px solid var(--accent-cyan);object-fit:contain;margin-bottom:14px;" />
+        <table class="breakdown-table" id="summary-detail-table"></table>
+      </div>
+    </section>
+
+    <!-- ===========================
+         FULL-WIDTH: History Table
+    ============================ -->
+    <section class="panel-card history-panel">
+      <h2>📋 Calculation History</h2>
+      <div class="table-scroll">
+        <table class="records-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Username</th>
+              <th>Image Size (mm)</th>
+              <th>Real Size (mm)</th>
+              <th>Result</th>
+              <th>Unit</th>
+              <th>Microscope</th>
+              <th>Timestamp</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="history-table-body">
+            <tr><td colspan="9" class="empty-history-note">Loading records…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+
+  <!-- =============================================
+       JAVASCRIPT — handles all client-side logic
+  ============================================= -->
+  <script>
+
+    // =============================================
+    // IMAGE UPLOAD PREVIEW HANDLER
+    // =============================================
+
+    // When the user selects an image, show a thumbnail preview
+    document.getElementById("input-image-file").addEventListener("change", function (changeEvent) {
+      const selectedFileObject = changeEvent.target.files[0];
+      if (!selectedFileObject) return;
+
+      const fileReaderInstance = new FileReader();
+      fileReaderInstance.onload = function (loadEvent) {
+        const previewContainerEl = document.getElementById("image-preview-container");
+        const previewImgEl       = document.getElementById("image-preview-tag");
+        const nameLabelEl        = document.getElementById("image-name-label");
+
+        previewImgEl.src = loadEvent.target.result;
+        nameLabelEl.textContent = "✅ " + selectedFileObject.name;
+        previewContainerEl.style.display = "block";
+      };
+      fileReaderInstance.readAsDataURL(selectedFileObject);
+    });
+
+
+    // =============================================
+    // CALCULATE BUTTON HANDLER
+    // =============================================
+
+    async function submitCalculationForm() {
+      const calculateButtonElement = document.getElementById("calculate-btn");
+      const statusToastElement     = document.getElementById("form-status-toast");
+
+      // Gather inputs
+      const usernameInputValue     = document.getElementById("input-username").value.trim();
+      const measuredSizeInputValue = document.getElementById("input-measured-size").value.trim();
+      const microscopeTypeValue    = document.getElementById("select-microscope-type").value;
+      const outputUnitValue        = document.getElementById("select-output-unit").value;
+      const imageFileObject        = document.getElementById("input-image-file").files[0];
+
+      // --- Client-side validation ---
+      if (!usernameInputValue) {
+        showStatusToast("error", "⚠ Please enter your username.");
+        return;
+      }
+      if (!measuredSizeInputValue || parseFloat(measuredSizeInputValue) <= 0) {
+        showStatusToast("error", "⚠ Enter a valid positive measured size.");
+        return;
+      }
+
+      // --- Build multipart form data (needed for file upload) ---
+      const formDataObject = new FormData();
+      formDataObject.append("username",         usernameInputValue);
+      formDataObject.append("measured_size_mm", measuredSizeInputValue);
+      formDataObject.append("microscope_type",  microscopeTypeValue);
+      formDataObject.append("output_unit",      outputUnitValue);
+      if (imageFileObject) {
+        formDataObject.append("specimen_image", imageFileObject);
+      }
+
+      // Show loading state on the button
+      calculateButtonElement.disabled = true;
+      calculateButtonElement.innerHTML = '<span class="spinner"></span> Calculating…';
+      hideStatusToast();
+
+      try {
+        // POST the form data to the Flask /calculate route
+        const serverResponse = await fetch("/calculate", {
+          method: "POST",
+          body:   formDataObject
+        });
+
+        const responseJsonData = await serverResponse.json();
+
+        if (!serverResponse.ok || responseJsonData.error) {
+          showStatusToast("error", "⚠ " + (responseJsonData.error || "Server error. Try again."));
+          return;
+        }
+
+        // Display the result
+        displayCalculationResult(responseJsonData);
+
+        // Refresh the history table
+        loadCalculationHistory();
+
+        showStatusToast("success", "✅ Calculation saved successfully!");
+
+      } catch (fetchError) {
+        showStatusToast("error", "⚠ Network error. Check your connection.");
+        console.error("Fetch error:", fetchError);
+      } finally {
+        // Restore the button
+        calculateButtonElement.disabled = false;
+        calculateButtonElement.innerHTML = "🔬 &nbsp; Calculate Real Size";
+      }
+    }
+
+
+    // =============================================
+    // RESULT DISPLAY FUNCTION
+    // =============================================
+
+    function displayCalculationResult(calculationData) {
+      const resultPanelEl     = document.getElementById("result-panel");
+      const mainValueEl       = document.getElementById("result-main-value");
+      const unitLabelEl       = document.getElementById("result-unit-label");
+      const breakdownTableEl  = document.getElementById("breakdown-table-body");
+      const formulaTextEl     = document.getElementById("result-formula-text");
+      const summaryContentEl  = document.getElementById("summary-content");
+      const summaryPlaceholderEl = document.getElementById("summary-placeholder");
+      const summaryImageEl    = document.getElementById("summary-image");
+      const summaryDetailEl   = document.getElementById("summary-detail-table");
+
+      // Main result number
+      mainValueEl.textContent = calculationData.final_result.toFixed(6);
+      unitLabelEl.textContent = calculationData.output_unit + "  (real specimen size)";
+
+      // Breakdown table rows
+      breakdownTableEl.innerHTML = `
+        <tr><td>Measured image size</td><td>${calculationData.measured_size_mm} mm</td></tr>
+        <tr><td>Microscope type</td><td>${calculationData.microscope_type}</td></tr>
+        <tr><td>Magnification factor</td><td>×${calculationData.magnification_factor}</td></tr>
+        <tr><td>Real size (mm)</td><td>${calculationData.real_size_mm.toExponential(4)} mm</td></tr>
+        <tr><td>Converted to ${calculationData.output_unit}</td><td>${calculationData.final_result.toFixed(6)} ${calculationData.output_unit}</td></tr>
+      `;
+
+      // Formula string
+      formulaTextEl.textContent = "Formula: " + calculationData.formula_string;
+
+      resultPanelEl.style.display = "block";
+
+      // --- Right-panel summary ---
+      summaryDetailEl.innerHTML = `
+        <tr><td>Username</td><td>${calculationData.username}</td></tr>
+        <tr><td>Record ID</td><td>#${calculationData.record_id}</td></tr>
+        <tr><td>Real Size</td><td>${calculationData.final_result.toFixed(6)} ${calculationData.output_unit}</td></tr>
+        <tr><td>Microscope</td><td>${calculationData.microscope_type}</td></tr>
+      `;
+
+      if (calculationData.image_filename) {
+        summaryImageEl.src = "/uploads/" + calculationData.image_filename;
+        summaryImageEl.style.display = "block";
+      } else {
+        summaryImageEl.style.display = "none";
+      }
+
+      summaryPlaceholderEl.style.display = "none";
+      summaryContentEl.style.display     = "block";
+    }
+
+
+    // =============================================
+    // HISTORY TABLE FUNCTIONS
+    // =============================================
+
+    async function loadCalculationHistory() {
+      const tableBodyElement = document.getElementById("history-table-body");
+
+      try {
+        const historyResponse  = await fetch("/records");
+        const historyJsonData  = await historyResponse.json();
+        const allRecordsArray  = historyJsonData.records;
+
+        if (!allRecordsArray || allRecordsArray.length === 0) {
+          tableBodyElement.innerHTML =
+            '<tr><td colspan="9" class="empty-history-note">No records yet. Perform a calculation above!</td></tr>';
+          return;
+        }
+
+        // Build table rows for each record
+        tableBodyElement.innerHTML = allRecordsArray.map(function (singleRecord) {
+          return `
+            <tr>
+              <td>#${singleRecord.id}</td>
+              <td>${escapeHtml(singleRecord.username)}</td>
+              <td>${singleRecord.image_size_mm.toFixed(4)}</td>
+              <td>${singleRecord.real_size_mm.toExponential(4)}</td>
+              <td>${singleRecord.result.toFixed(6)}</td>
+              <td>${escapeHtml(singleRecord.unit)}</td>
+              <td title="${escapeHtml(singleRecord.microscope_type)}">${escapeHtml(singleRecord.microscope_type).substring(0, 22)}…</td>
+              <td>${escapeHtml(singleRecord.timestamp)}</td>
+              <td>
+                <button class="btn-danger" onclick="deleteRecordById(${singleRecord.id})">🗑 Delete</button>
+              </td>
+            </tr>
+          `;
+        }).join("");
+
+      } catch (historyFetchError) {
+        tableBodyElement.innerHTML =
+          '<tr><td colspan="9" class="empty-history-note">⚠ Failed to load records.</td></tr>';
+        console.error("History load error:", historyFetchError);
+      }
+    }
+
+
+    async function deleteRecordById(targetRecordId) {
+      // Ask for confirmation before deleting
+      const userConfirmedDeletion = confirm(`Are you sure you want to delete Record #${targetRecordId}?`);
+      if (!userConfirmedDeletion) return;
+
+      try {
+        const deleteResponse = await fetch(`/records/${targetRecordId}`, { method: "DELETE" });
+        const deleteResult   = await deleteResponse.json();
+
+        if (deleteResult.success) {
+          loadCalculationHistory();  // Refresh the table
+        } else {
+          alert("Could not delete record. Please try again.");
+        }
+      } catch (deleteFetchError) {
+        alert("Network error while deleting record.");
+        console.error("Delete error:", deleteFetchError);
+      }
+    }
+
+
+    // =============================================
+    // UTILITY FUNCTIONS
+    // =============================================
+
+    function showStatusToast(toastType, messageText) {
+      const toastElement = document.getElementById("form-status-toast");
+      toastElement.className = "status-toast " + toastType;
+      toastElement.textContent = messageText;
+      toastElement.style.display = "block";
+    }
+
+    function hideStatusToast() {
+      document.getElementById("form-status-toast").style.display = "none";
+    }
+
+    // Prevent XSS by escaping HTML characters in user-supplied content
+    function escapeHtml(rawText) {
+      if (rawText == null) return "";
+      const tempDiv = document.createElement("div");
+      tempDiv.appendChild(document.createTextNode(String(rawText)));
+      return tempDiv.innerHTML;
+    }
+
+    // =============================================
+    // INIT — load history when page first opens
+    // =============================================
+    document.addEventListener("DOMContentLoaded", function () {
+      loadCalculationHistory();
+    });
+
+  </script>
+</body>
+</html>

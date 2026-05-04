@@ -1,0 +1,32 @@
+# =====================================================
+# render.yaml — Render.com deployment configuration
+# =====================================================
+# This file tells Render HOW to build and run your app.
+# Commit this file to the root of your GitHub repository.
+# =====================================================
+
+services:
+  - type: web                          # We're deploying a web service (not a worker)
+    name: microscope-calculator        # Display name on the Render dashboard
+    runtime: python                    # Language runtime
+    buildCommand: pip install -r requirements.txt   # Install all dependencies
+    startCommand: gunicorn app:flask_application_instance  # Start Flask via Gunicorn
+    #               ^^^       ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    #               app.py    the variable name of your Flask() instance
+
+    envVars:
+      # Render auto-injects DATABASE_URL if you attach a Postgres database.
+      # You can also set it manually in the Render dashboard under "Environment".
+      - key: DATABASE_URL
+        fromDatabase:
+          name: microscope-db          # Must match the database name below
+          property: connectionString
+
+      # Always set a strong SECRET_KEY in production
+      - key: SECRET_KEY
+        generateValue: true            # Render auto-generates a secure random string
+
+databases:
+  - name: microscope-db                # The Render Postgres database name
+    databaseName: microscope_records   # The actual Postgres DB name inside
+    plan: free                         # Use the free tier

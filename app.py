@@ -275,7 +275,7 @@ def serve_uploaded_image(image_filename):
 # ============================================================
 # Run the Application
 # ============================================================
-
+app = flask_application_instance
 if __name__ == "__main__":
     # debug=True enables hot-reloading during development.
     # In production (Render), Gunicorn takes over — this block won't run.

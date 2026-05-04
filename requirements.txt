@@ -1,21 +1,5 @@
-# =====================================================
-# requirements.txt — Python dependencies for this project
-# =====================================================
-# Flask: the web framework (Phase D/E)
 Flask==3.0.3
-
-# Flask-SQLAlchemy: database ORM (maps Python classes to DB tables)
 Flask-SQLAlchemy==3.1.1
-
-# Pillow: Python image processing (used in Phase C GUI for thumbnails)
-Pillow==10.3.0
-
-# Gunicorn: production WSGI server used by Render to run the Flask app
-# (Do NOT use Flask's built-in dev server in production)
 gunicorn==22.0.0
-
-# psycopg2-binary: PostgreSQL driver (needed when Render uses a Postgres DB)
 psycopg2-binary==2.9.9
-
-# Werkzeug: part of Flask — provides secure_filename for safe file uploads
 Werkzeug==3.0.3
